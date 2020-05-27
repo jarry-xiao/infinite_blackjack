@@ -126,16 +126,14 @@ player_hard_ev[4: 22] = np.maximum(player_hard_ev[4: 22], player_hard_double_ev[
 player_soft_ev[12: 22] = np.maximum(player_soft_ev[12: 22], player_soft_double_ev[12: 22])
 player_hard_ev[4: 22] = np.maximum(player_hard_ev[4: 22], hard_surrender_ev[4: 22])
 player_soft_ev[12: 22] = np.maximum(player_soft_ev[12: 22], soft_surrender_ev[12: 22])
-
-
-dealer_hands = list(range(2, 11)) + ['A']
-player_hands = list(range(4, 22)) + [f"A{x}" for x in range(2, 10)]
-index_to_hand = dict(enumerate(player_hands)) 
     
 
 def stack_equities(hard, soft):
-    params = (hard[4:22, 2:12], soft[13:21, 2:12])
-    data = np.concatenate(params, axis=0)
+    dealer_hands = list(range(2, 11)) + ['A']
+    player_hands = list(range(4, 22)) + [f"A{x}" for x in range(2, 10)]
+    index_to_hand = dict(enumerate(player_hands)) 
+    args = (hard[4:22, 2:12], soft[13:21, 2:12])
+    data = np.concatenate(args, axis=0)
     df = (
         pd.DataFrame(data, columns=dealer_hands)
         .reset_index()
