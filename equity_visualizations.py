@@ -67,9 +67,15 @@ for i in [0, 1]:
     ax[i].tick_params(axis='y', labelrotation=0)
     ax[i].set_xlabel("Dealer's Upcard", size=20, labelpad=15, weight='semibold', family="Futura")
     ax[i].set_ylabel("Player's Hand", size=20, labelpad=15, weight='semibold', family="Futura")
+    ax[i].figure.subplots_adjust(bottom = 0.5, top=0.9, left=0.2, right=0.8)
 fig.patch.set_facecolor('seashell')
-plt.tight_layout() 
+fig.patch.set_height(30)
+fig.patch.set_width(40)
+plt.tight_layout()
+plt.subplots_adjust(top=0.9)
+fig.suptitle('Blackjack Optimal Strategy', fontsize=45)
 fig.savefig("images/optimal_actions.png", facecolor=fig.get_facecolor())
+
 
 fig, ax = plt.subplots(figsize=(14, 18))
 sns.heatmap(
@@ -90,4 +96,9 @@ ax.set_xlabel("Dealer's Upcard", size=20, labelpad=15, weight='semibold', family
 ax.set_ylabel("Player's Hand", size=20, labelpad=15, weight='semibold', family="Futura")
 cbar = ax.collections[0].colorbar 
 cbar.ax.set_title("Equity", pad=15)
-fig.savefig("images/combined_equity.png")
+fig.patch.set_facecolor('seashell')
+plt.subplots_adjust(top=0.89, left=0.2)
+fig.suptitle('Blackjack Optimal Strategy', fontsize=32)
+
+plt.show()
+fig.savefig("images/combined_equity.png", facecolor=fig.get_facecolor())
