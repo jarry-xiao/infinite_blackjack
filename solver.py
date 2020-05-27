@@ -126,13 +126,47 @@ player_hard_ev[4: 22] = np.maximum(player_hard_ev[4: 22], player_hard_double_ev[
 player_soft_ev[12: 22] = np.maximum(player_soft_ev[12: 22], player_soft_double_ev[12: 22])
 player_hard_ev[4: 22] = np.maximum(player_hard_ev[4: 22], hard_surrender_ev[4: 22])
 player_soft_ev[12: 22] = np.maximum(player_soft_ev[12: 22], soft_surrender_ev[12: 22])
-    
 
-def stack_equities(hard, soft):
-    dealer_hands = list(range(2, 11)) + ['A']
-    player_hands = list(range(4, 22)) + [f"A{x}" for x in range(2, 10)]
+# Compute the EV of making a split
+split_ev = np.zeros((12, 12))
+for state in range(2, 11):
+    low_card_equity = player_hard_ev[state + 2: state + 10].sum(axis=0)
+    high_card_equity = player_hard_ev[state + 10] * 4
+    if state < 11:
+        ace_equity = player_soft_ev[state + 11]
+    split_ev[state] = 2 * (low_card_equity + high_card_equity + ace_equity) / 13
+split_ev[11] = 2 * (player_soft_stand_ev[12: 21].sum(axis=0) + player_soft_stand_ev[21] * 4) / 13
+
+player_split_ev = split_ev.copy()
+
+for state in range(2, 11):
+    player_split_ev[state] = np.maximum(player_split_ev[state], player_hard_ev[2 * state])
+player_split_ev[11] = np.maximum(player_split_ev[11], player_soft_ev[12])
+
+# Add split data to all other tables
+def get_split_table(ev_table_h, ev_table_s):
+    args = []
+    for i in range(11):
+        args.append(ev_table_h[2*i])
+    args.append(ev_table_s[12])
+    return np.stack(tuple(args), axis=0)
+
+player_split_stand_ev = get_split_table(player_hard_stand_ev, player_soft_stand_ev)
+player_split_hit_ev = get_split_table(player_hard_hit_ev, player_soft_hit_ev)
+player_split_double_ev = get_split_table(player_hard_double_ev, player_soft_double_ev)
+split_surrender_ev = get_split_table(hard_surrender_ev, soft_surrender_ev)
+
+
+# Put all of our results into nice tables
+
+
+def stack_equities(hard, soft, split):
+    dealer_hands = list(range(2, 10)) + ['T', 'A']
+    soft_hands = [f"A{x}" for x in range(2, 10)]
+    split_hands = [f"{h}{h}" for h in dealer_hands]
+    player_hands = list(range(4, 22)) + soft_hands + split_hands
     index_to_hand = dict(enumerate(player_hands)) 
-    args = (hard[4:22, 2:12], soft[13:21, 2:12])
+    args = (hard[4:22, 2:12], soft[13:21, 2:12], split[2:12:, 2:12])
     data = np.concatenate(args, axis=0)
     df = (
         pd.DataFrame(data, columns=dealer_hands)
@@ -142,8 +176,19 @@ def stack_equities(hard, soft):
     df.hand = df.hand.map(index_to_hand)
     return df
 
-player_ev = stack_equities(player_hard_ev, player_soft_ev)
-stand_ev = stack_equities(player_hard_stand_ev, player_soft_stand_ev)
-hit_ev = stack_equities(player_hard_hit_ev, player_soft_hit_ev)
-double_ev = stack_equities(player_hard_double_ev, player_soft_double_ev)
-surrender_ev = stack_equities(hard_surrender_ev, soft_surrender_ev)
+player_ev = stack_equities(player_hard_ev, player_soft_ev, player_split_ev)
+stand_ev = stack_equities(
+    player_hard_stand_ev, player_soft_stand_ev, player_split_stand_ev
+)
+hit_ev = stack_equities(
+    player_hard_hit_ev, player_soft_hit_ev, player_split_hit_ev
+)
+double_ev = stack_equities(
+    player_hard_double_ev, player_soft_double_ev, player_split_double_ev
+)
+surrender_ev = stack_equities(
+    hard_surrender_ev, soft_surrender_ev, split_surrender_ev 
+)
+split_ev = stack_equities(
+    -np.ones(player_hard_ev.shape), -np.ones(player_soft_ev.shape), split_ev
+)
