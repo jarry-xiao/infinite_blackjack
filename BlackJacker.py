@@ -398,7 +398,7 @@ player_cache = {}
 
 
 def solve(card1, card2, upcard, remove=[]):
-    p = Player(card1, card2)
+    p = Player([card1, card2])
     return p.act(p.cards, upcard, remove=[], top_level=True)
     
     
